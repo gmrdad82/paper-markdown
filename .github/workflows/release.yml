@@ -1,0 +1,75 @@
+# A v* tag builds every first-party plugin under plugins/ for wasm32-wasip2,
+# attaches the .wasm files and a SHA256SUMS file to the GitHub release, and
+# refuses the release when an index entry that names this repo carries a
+# sha256 other than the built artifact's. No secrets beyond the workflow's
+# own token, no tooling from outside this repo.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Build every first-party plugin
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          mkdir -p dist
+          for manifest in plugins/*/Cargo.toml; do
+            crate="$(dirname "$manifest")"
+            name="$(basename "$crate")"
+            (cd "$crate" && cargo build --release --target wasm32-wasip2)
+            cp "$crate"/target/wasm32-wasip2/release/*.wasm "dist/$name.wasm"
+          done
+          cd dist
+          : > SHA256SUMS
+          files=(*.wasm)
+          [ "${#files[@]}" -gt 0 ] && sha256sum "${files[@]}" > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: The index must carry the built hashes
+        run: |
+          set -euo pipefail
+          if [ ! -f index.json ]; then
+            echo "No index yet: nothing to compare."
+            exit 0
+          fi
+          node - <<'JS'
+          const fs = require("fs");
+          const index = JSON.parse(fs.readFileSync("index.json", "utf8"));
+          const sums = Object.fromEntries(
+            fs.readFileSync("dist/SHA256SUMS", "utf8").trim().split("\n").filter(Boolean)
+              .map((line) => { const [hash, file] = line.split(/\s+/); return [file, hash]; }));
+          const repo = `https://github.com/${process.env.GITHUB_REPOSITORY}`;
+          let bad = 0;
+          for (const entry of index.entries ?? []) {
+            if (entry.repo !== repo) continue;
+            const file = entry.asset.split("/").pop();
+            if (!(file in sums)) { console.error(`${entry.id}: no built artifact named ${file}`); bad++; continue; }
+            if (sums[file] !== entry.sha256) { console.error(`${entry.id}: index sha256 ${entry.sha256} differs from the built ${sums[file]}`); bad++; }
+          }
+          if (bad) process.exit(1);
+          console.log(`${Object.keys(sums).length} artifact(s) built; the index agrees.`);
+          JS
+
+      - name: Attach the artifacts to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=(dist/*.wasm)
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" \
+            --notes "First-party plugins built from $GITHUB_SHA" dist/SHA256SUMS "${files[@]}"
