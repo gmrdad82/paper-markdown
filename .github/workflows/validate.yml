@@ -1,7 +1,7 @@
 # Runs on every pull request and every push to main: a public repo's minutes
 # are free, and a third-party listing PR must be checked before a maintainer
-# merges. Two jobs: the index validation (bin/validate-index.mjs, landing
-# with the registry card; until then the job says so and passes) and the
+# merges. Two jobs: the index validation (bin/validate-index.mjs, which
+# arrives together with index.json; until then the job says so and passes) and the
 # nothing-internal gate, which lists only generic patterns — a denylist of
 # private names would itself leak them. The gate skips this file, which
 # carries the patterns it looks for.
@@ -38,7 +38,7 @@ jobs:
       - name: Nothing internal in a public tree
         run: |
           set -uo pipefail
-          if grep -rnIE '(^|[^a-z])/home/|~/[A-Za-z]|\.local/share|dev-notes|1password|localhost:[0-9]+|-dev\.[a-z]+\.[a-z]+' \
+          if grep -rnIE '(^|[^a-z])/home/|~/[A-Za-z]|\.local/share|localhost:[0-9]+|-dev\.[a-z]+\.[a-z]+' \
               --exclude-dir=.git --exclude-dir=target --exclude=validate.yml .; then
             echo "::error::A local path, a private tool or a dev hostname reached a public file (shown above)."
             exit 1

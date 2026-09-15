@@ -2,8 +2,9 @@
 
 The public registry for the PITO desks' plugins and themes: `index.json`,
 the developer documentation, the two templates, and the first-party
-plugins and themes with the CI that builds them. Every other estate repo
-is private; this one is read by strangers, and its laws follow from that.
+plugins and themes with the CI that builds them. The other PITO
+repositories are private; this one is read by strangers, and its laws
+follow from that.
 
 # Hard rules
 
@@ -26,7 +27,7 @@ is private; this one is read by strangers, and its laws follow from that.
 - **A third party's plugin lives in a public repository**, and its asset
   URL sits under that repository's own releases.
 - **Product names are the codenames** (Work, Pigeon, Studio) until the
-  naming lands; write them so a rename is a search-and-replace.
+  products' names are final; write them so a rename is a search-and-replace.
 
 # The local gate
 
