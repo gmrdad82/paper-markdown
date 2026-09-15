@@ -1,20 +1,9 @@
-# pito-plugins
+# ideas-markdown
 
-One registry for the three PITO desks: Work, Pigeon and Studio. Plugins and
-themes are listed in `index.json`, installed from GitHub releases over
-HTTPS, and verified by SHA-256 before a desk loads them. A desk fetches the
-index only from its Plugins screen; nothing is fetched at boot.
+The Markdown reader plugin for Ideas, the notebook desk: a Note's body rendered with headings, lists, code and links instead of plain text, inside the reader's own sheet.
 
-## Listing a plugin
-
-Fork this repository, add an entry to `index.json` (its shape is
-`schema/index.schema.json`), and open a pull request. CI validates the
-entry; a maintainer merges. A listed plugin lives in a public repository,
-and its `sha256` is the hash of the released asset's bytes.
-
-## Building one
-
-Start from `templates/plugin/` (Rust, `wasm32-wasip2`) or
-`templates/theme/` (palette tokens, no code), and read `docs/`. The plugin
-interface is the `pito:host` WIT world under `wit/`, plus one world per
-desk.
+Under construction: nothing to install yet. When it ships, a tagged
+release carries three files, `plugin.toml`, `plugin.wasm` and
+`SHA256SUMS`, and Ideas installs it from this repository by name,
+verifying the hash before loading anything. Official: the owner of this
+repository is the owner of the desks.
